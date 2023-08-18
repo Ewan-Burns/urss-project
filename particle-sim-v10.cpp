@@ -23,6 +23,9 @@ struct Particle {
     ActiveState active;         // Flag to indicate if the particle has crossed a boundary and moved to a new vector
 };
 
+//Number of iterations between erase of particles
+int N=1;
+
 double genRN(double min, double max) {
     return min + static_cast<double>(rand()) / RAND_MAX * (max - min);
 }
@@ -65,19 +68,28 @@ void moveParticles(std::vector<Particle>& particles, double dt) {
     }
 }
 
-int main() {
+int main(int argc, char** argv) {
+    if (argc!=2) {
+      std::cerr << "Usage : N " << "\n";
+      exit(1);
+    }
+    N = std::atoi(argv[1]);
     srand(1691169547); // Set fixed seed for random number generation
 
     // Create particles with unique labels
     std::vector<Particle> particles;
     //for (char label = 'A'; label <= 'J'; ++label) {
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 10000; i++) {
         Particle particle;
         //particle.label = label;
         particle.position[0] = genRN(0.0, 1.0);
         particle.position[1] = genRN(0.0, 1.0);
         particle.velocity[0] = genRN(-0.1, 0.1);
         particle.velocity[1] = genRN(-0.1, 0.1);
+	particle.acceleration[0] = 0.0;
+	particle.acceleration[1] = 0.0;
+	particle.accNext[0]=0.0;
+	particle.accNext[1]=0.0;
         particle.active = Active;   //Initialised to Active 
         particles.push_back(particle);
     }
@@ -93,7 +105,7 @@ int main() {
     auto runtimeStart = std::chrono::high_resolution_clock::now();
 
     // Move particles for 100 iterations
-    for (int i = 0; i < 10000; ++i) {
+    for (int i = 0; i < 100000; ++i) {
         moveParticles(particles, dt);
         #ifdef DEBUG
         if (particles.size() > 3000) exit(1);
@@ -137,11 +149,10 @@ int main() {
             }
 
         // Periodically erase inactive particles from the particlevec
-        const int N = 1; // Adjust N as needed
         if (i % N == 0) {
-//            std::erase_if (particles,[](const Particle& p) { return (p.active != 0); });
-            particles.erase(std::remove_if(particles.begin(), particles.end(),
-                [](const Particle& p) { return p.active == Removed; }), particles.end());
+            std::erase_if (particles,[](const Particle& p) { return (p.active != 0); });
+//            particles.erase(std::remove_if(particles.begin(), particles.end(),
+//                [](const Particle& p) { return p.active == Removed; }), particles.end());
         }
     }
 
